@@ -1,6 +1,7 @@
 name: Hprofile Action
 # how this pipline will run workflow_dispatch means only run when we run manually can change it to push or anything
-on: [push, workflow_dispatch]  
+#on: [push, workflow_dispatch]  
+on: workflow_dispatch
 env:
   AWS_REGION: us-east-1
 jobs:
