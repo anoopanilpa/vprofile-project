@@ -1,26 +1,28 @@
-name : Hprofile Action
+name: Hprofile Action
 # how this pipline will run workflow_dispatch means only run when we run manually can change it to push or anything
-on : workflow_dispatch  
-jobs : 
-  Testing :
-  #which runner
-    runs-on : ubuntu-latest
-    steps :
-      - name : Code checkout
+on: [push, workflow_dispatch]  
+env:
+  AWS_REGION: us-east-1
+jobs:
+  Testing:
+    #which runner
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code checkout
         uses: actions/checkout@v4
 
-      - name : MavenTest
-        run : mvn test
+      - name: MavenTest
+        run: mvn test
 
       #check style analysis
-      - name : checkstyle
-        run : mvn checkstyle:checkstyle
+      - name: checkstyle
+        run: mvn checkstyle:checkstyle
 
-      - name : set java 11
+      - name: set java 11
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin' # See 'Supported distributions' for available options
-          java-version: '11'
+          distribution: "temurin" # See 'Supported distributions' for available options
+          java-version: "11"
 
       - name: Setup SonarQube
         uses: warchant/setup-sonar-scanner@v7
@@ -30,15 +32,15 @@ jobs :
       #checkstyle-result.xml is used for checkout result
       - name: SonarQube Scan
         run: sonar-scanner
-           -Dsonar.host.url=${{ secrets.SONAR_URL }}
-           -Dsonar.login=${{ secrets.SONAR_TOCKEN }}
-           -Dsonar.organization=${{ secrets.SONAR_ORG }}
-           -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
-           -Dsonar.sources=src/
-           -Dsonar.junit.reportsPath=target/surefire-reports/ 
-           -Dsonar.jacoco.reportsPath=target/jacoco.exec 
-           -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml
-           -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/
+          -Dsonar.host.url=${{ secrets.SONAR_URL }}
+          -Dsonar.login=${{ secrets.SONAR_TOCKEN }}
+          -Dsonar.organization=${{ secrets.SONAR_ORG }}
+          -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+          -Dsonar.sources=src/
+          -Dsonar.junit.reportsPath=target/surefire-reports/
+          -Dsonar.jacoco.reportsPath=target/jacoco.exec
+          -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml
+          -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/
 
       - name: SonarQube Quality Gate check
         id: sonarqube-quality-gate-check
@@ -47,4 +49,42 @@ jobs :
         timeout-minutes: 5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOCKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_URL }} 
+          SONAR_HOST_URL: ${{ secrets.SONAR_URL }}
+
+  Build_PUBLISH:
+    # needs menas this job is depend on previous job Testing  s
+    needs: Testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v4
+
+      - name: updating application.properties file
+        #updateing RDS details
+        run: |
+          sed -i "s/^jdbc.username.*$/jdbc.username\=${{ secrets.RDS_USER }}/" src/main/resources/application.properties
+          sed -i "s/^jdbc.password.*$/jdbc.password\=${{ secrets.RDS_PASS }}/" src/main/resources/application.properties
+          sed -i "s/db01/${{ secrets.RDS_ENDPOINT }}/" src/main/resources/application.properties
+
+      - name: Build & Upload image to ECR
+        uses: appleboy/docker-ecr-action@master
+        with:
+          access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          registry: ${{ secrets.REGISTRY }}
+          # repo that we created on ECR
+          repo: actapp
+          #region: ${{ env.AWS_REGION }}
+          tags: latest,${{ github.run_number }}
+          daemon_off: false
+          dockerfile: ./Dockerfile
+          # context where docker file in our code
+          context: ./
+
+  Deploy_IMAGE:
+      # needs menas this job is depend on previous job Testing  s
+    needs: Build_PUBLISH
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v4
