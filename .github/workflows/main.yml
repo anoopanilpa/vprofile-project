@@ -1,0 +1,10 @@
+name : Hprofile Action
+# how this pipline will run workflow_dispatch means only run when we run manually can change it to push or anything
+on : workflow_dispatch  
+jobs : 
+  Testing :
+  #which runner
+    runs-on : ubuntu-latest
+    steps :
+      - name : Testing Workflow
+        run : echo "workflow works"
