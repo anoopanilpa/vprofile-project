@@ -6,5 +6,13 @@ jobs :
   #which runner
     runs-on : ubuntu-latest
     steps :
-      - name : Testing Workflow
-        run : echo "workflow works"
+      - name : Code checkout
+        uses: actions/checkout@v4
+
+      - name : MavenTest
+        run : mvn test
+
+      #check style analysis
+      - name : checkstyle
+        run : mvn checkstyle:checkstyle
+        
