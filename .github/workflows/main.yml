@@ -4,6 +4,13 @@ name: Hprofile Action
 on: workflow_dispatch
 env:
   AWS_REGION: us-east-1
+  ECR_REPO : vprofecrapp
+  ECS_SERVC : vprof-ecs-svc1
+  ECS_CLUSTER : vprof-ecsapp
+  #from task definition
+  ECS_TF_FILE : taskdeff.json
+  #from task definition
+  CONTAINER_NAME : vprof-ecsapp
 jobs:
   Testing:
     #which runner
@@ -102,16 +109,17 @@ jobs:
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: task-definition.json
-          container-name: my-container
+          task-definition: ${{ env.ECS_TF_FILE }}
+          container-name: ${{ env.ECS_TF_FILE }}
           #the below mthord is used in action URL that from stepp with id build-image only us this if build step is in same stage
-          image: ${{ steps.build-image.outputs.image }}
+          #https://github.com/marketplace/actions/amazon-ecs-deploy-task-definition-action-for-github-actions
+          image: ${{ secrets.ECR_REGISTRY }}/${{ env.ECR_REPO }}:${{ github.run_number }} 
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: my-service
-          cluster: my-cluster
+          task-definition:  ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVC }}
+          cluster: ${{ env.ECS_CLUSTER }}
           # the below will wait untill container become stable and healthy
           wait-for-service-stability: true
