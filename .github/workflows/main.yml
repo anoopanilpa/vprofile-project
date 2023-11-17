@@ -1,6 +1,6 @@
 name: Hprofile Action
 # how this pipline will run workflow_dispatch means only run when we run manually can change it to push or anything
-#on: [push, workflow_dispatch]  
+#on: [push, workflow_dispatch]
 on: workflow_dispatch
 env:
   AWS_REGION: us-east-1
@@ -74,7 +74,7 @@ jobs:
           secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           registry: ${{ secrets.REGISTRY }}
           # repo that we created on ECR
-          repo: actapp
+          repo: vprofecrapp
           region: ${{ env.AWS_REGION }}
           tags: latest,${{ github.run_number }}
           daemon_off: false
@@ -83,8 +83,8 @@ jobs:
           context: ./
 
   Deploy_IMAGE:
-      # needs menas this job is depend on previous job Testing  
-      # https://github.com/marketplace/actions/amazon-ecs-deploy-task-definition-action-for-github-actions
+    # needs menas this job is depend on previous job Testing
+    # https://github.com/marketplace/actions/amazon-ecs-deploy-task-definition-action-for-github-actions
     needs: Build_PUBLISH
     runs-on: ubuntu-latest
     steps:
