@@ -10,7 +10,8 @@ env:
   #from task definition
   ECS_TF_FILE : taskdeff.json
   #from task definition
-  CONTAINER_NAME : vprof-ecsapp
+  CONTAINER_NAME : vproapp	
+
 jobs:
   Testing:
     #which runner
