@@ -110,7 +110,7 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: ${{ env.ECS_TF_FILE }}
-          container-name: ${{ env.ECS_TF_FILE }}
+          container-name: ${{ env.CONTAINER_NAME }}
           #the below mthord is used in action URL that from stepp with id build-image only us this if build step is in same stage
           #https://github.com/marketplace/actions/amazon-ecs-deploy-task-definition-action-for-github-actions
           image: ${{ secrets.ECR_REGISTRY }}/${{ env.ECR_REPO }}:${{ github.run_number }} 
